@@ -56,10 +56,23 @@ public class UserService implements BaseService<User> {
 	 * 
 	 * @return
 	 */
-	public User findByAccount(String account) {
+	public User getUser(String account) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("account", account);
 		String hql = "from User where account = :account";
+		return userDAO.get(hql, params);
+	}
+	/**
+	 * 根据账号和密码查找用户
+	 * @param account
+	 * @param pwd
+	 * @return
+	 */
+	public User getUser(String account, String pwd) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("account", account);
+		params.put("pwd", pwd);
+		String hql = "from User where account = :account and pwd = :pwd";
 		return userDAO.get(hql, params);
 	}
 	/**
