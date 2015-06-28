@@ -38,7 +38,6 @@ public class TypeController {
 	@ResponseBody
 	@RequestMapping("/listAll")
 	public List<EType> listAll() {
-		//System.out.println("请求/activitiesType/listAll");
 		List<Type> list = typeService.findAll();
 		List<EType> eList = new ArrayList<EType>();
 		for (Type Type : list) {

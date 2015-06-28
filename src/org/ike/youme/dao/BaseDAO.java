@@ -70,12 +70,14 @@ public class BaseDAO<T> {
 	public void update(T o) {
 		if (o != null) {
 			this.getCurrentSession().update(o);
+			this.getCurrentSession().flush();
 		}
 	}
 
 	public void saveOrUpdate(T o) {
 		if (o != null) {
 			this.getCurrentSession().saveOrUpdate(o);
+			this.getCurrentSession().flush();
 		}
 	}
 

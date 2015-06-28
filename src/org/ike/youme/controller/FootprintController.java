@@ -51,7 +51,6 @@ public class FootprintController {
 	@ResponseBody
 	@RequestMapping("/add")
 	public String add(String jsonString) {
-		System.out.println("请求/footprint/add：" + jsonString);
 		EFootprint eFootprint = JSON.parseObject(jsonString, EFootprint.class);
 		Footprint f = new Footprint();
 		User user = new User();
@@ -104,7 +103,6 @@ public class FootprintController {
 	@ResponseBody
 	@RequestMapping("/listMore")
 	public List<EFootprint> listMore(String jsonString) {
-		System.out.println("请求/footprint/listMore：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("eActivityId");
 		Integer footprintId = (Integer)object.get("eFootprintId");
@@ -122,7 +120,6 @@ public class FootprintController {
 	@ResponseBody
 	@RequestMapping("/listNewest")
 	public List<EFootprint> listNewest(String jsonString) {
-		System.out.println("请求/footprint/listNewest：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("eActivityId");
 		Integer footprintId = (Integer)object.get("eFootprintId");
@@ -139,7 +136,6 @@ public class FootprintController {
 	@ResponseBody
 	@RequestMapping("/delete")
 	public String delete(String jsonString) {
-		System.out.println("请求/footprint/delete：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer footprintId = (Integer)object.get("footprintId");
 		Footprint footprint = footprintService.get(footprintId);

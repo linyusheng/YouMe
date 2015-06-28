@@ -63,8 +63,9 @@ public class ActivityService implements BaseService<Activity> {
 	 */
 	public EActivity copyObject(Activity activity) {
 		EActivity e = new EActivity();
-		BeanUtils.copyProperties(activity, e);
-		e.setCreateTime(Tool.timestampToString(activity.getCreateTime()));//
+		String[] ignore = {"createTime","startTime","endTime"};
+		BeanUtils.copyProperties(activity, e, ignore);
+		e.setCreateTime(Tool.timestampToString(activity.getCreateTime()));
 		e.setStartTime(Tool.timestampToString(activity.getStartTime()));
 		e.setEndTime(Tool.timestampToString(activity.getEndTime()));
 		//获得活动的男女人数
@@ -72,7 +73,6 @@ public class ActivityService implements BaseService<Activity> {
 		e.setMaleNum(sex[0]);
 		e.setFemaleNum(sex[1]);
 		//初始化活动创建者信息
-		e.setUserId(activity.getUser().getUserId());
 		e.setAccount(activity.getUser().getAccount());
 		e.setNickname(activity.getUser().getNickname());
 		e.setHead(activity.getUser().getHead());
@@ -129,17 +129,12 @@ public class ActivityService implements BaseService<Activity> {
 	 * @param typeList
 	 * @return
 	 */
-	public List<Activity> findNewest(Integer activityId,String city,List<EType> typeList) {
+	public List<Activity> findNewest(Integer typeId, Integer activityId,String city) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("city", city);
+		params.put("typeId", typeId);
 		params.put("activityId", activityId);
-		String hql = "";
-		if (typeList.size() == 0) {
-			hql = "from Activity where city = :city and activityId > :activityId order by activityId asc";
-		}else {
-			hql = "from Activity where city = :city and activityId > :activityId and type.typeId in(" + typeSql(typeList) + ") order by activityId asc";
-		}
-		//System.out.println("刷新活动："+selectHql);
+		String hql = "from Activity where city = :city and activityId > :activityId and type.typeId = :typeId order by activityId asc";
 		return activityDAO.find(hql, params);
 	}
 	/**
@@ -183,8 +178,39 @@ public class ActivityService implements BaseService<Activity> {
 		}
 		return sex;
 	}
-	
-	
+	/**
+	 * 获取10条公益活动
+	 * 
+	 * @return
+	 */
+	public List<Activity> getPublic(String city) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("city", city);
+		String hql = "from Activity where city=:city and type.typeName = '公益' order by activityId asc";
+		return activityDAO.find(hql, params,1,10);
+	}
+	/**
+	 * 获取10条最新活动
+	 * 
+	 * @return
+	 */
+	public List<Activity> getNewest(String city) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("city", city);
+		String hql = "from Activity where city=:city order by activityId asc";
+		return activityDAO.find(hql, params,1,10);
+	}
+	/**
+	 * 获取10条最热活动
+	 * 
+	 * @return
+	 */
+	public List<Activity> getHottest(String city) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("city", city);
+		String hql = "from Activity where city=:city order by browseNum desc";
+		return activityDAO.find(hql, params,1,10);
+	}
 	
 	
 

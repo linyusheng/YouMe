@@ -31,13 +31,26 @@
 	</bean>
 	
 	<!-- 配置视图解析器，使用InternalResourceViewResolver类作为视图解析器,Controller回传ModelAndView,DispatcherServlet将其交给ViewResolver解析 -->
-	 <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-	 	<!-- 指定目录前缀 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<!-- 指定目录前缀 -->
 	 	<property name="prefix" value="/" />
 	 	<!-- 指定目录后缀 -->
 	 	<property name="suffix" value=".jsp" />
-	 </bean>
+	</bean>
 	
+	<!-- 支持上传文件 -->  
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/> 
 	
+	<!-- 日志拦截器 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/activity/*"/>
+			<mvc:mapping path="/attend/*"/>
+			<mvc:mapping path="/footprint/*"/>
+			<mvc:mapping path="/type/*"/>
+			<mvc:mapping path="/user/*"/>
+			<bean class="org.ike.youme.intercetors.LogIntercetor"></bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
 	
 </beans>

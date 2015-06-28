@@ -48,7 +48,6 @@ public class AttendController {
 	@ResponseBody
 	@RequestMapping("/addOrdelete")
 	public String addOrdelete(String jsonString) {
-		System.out.println("请求/attend/addOrdelete：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		Integer activityId = (Integer)object.get("activityId");
@@ -79,7 +78,6 @@ public class AttendController {
 	@ResponseBody
 	@RequestMapping("/listAttender")
 	public List<EUser> listAttender(String jsonString) {
-		System.out.println("请求/attend/listAttender：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("activityId");
 		List<Attend> list = attendService.findByActivityId(activityId);
@@ -101,7 +99,6 @@ public class AttendController {
 	@ResponseBody
 	@RequestMapping("/isAttend")
 	public String isAttend(String jsonString) {
-		System.out.println("请求/attend/isAttend：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("eUserId");
 		Integer activityId = (Integer)object.get("activityId");

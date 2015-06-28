@@ -30,7 +30,7 @@
 				<label for="url" class="col-sm-2 control-label">访问资源：</label>
 				<div class="col-sm-10">
 					<input type="text" class="form-control" id="url"
-						placeholder="如：/activities/add">
+						placeholder="如：/activity/listAll">
 				</div>
 			</div>
 			<div class="form-group">

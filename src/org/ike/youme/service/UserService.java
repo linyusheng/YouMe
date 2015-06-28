@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.Session;
 import org.ike.youme.entity.User;
 import org.ike.youme.dao.UserDAO;
 import org.ike.youme.model.EUser;
@@ -76,6 +77,19 @@ public class UserService implements BaseService<User> {
 		return userDAO.get(hql, params);
 	}
 	/**
+	 * 修改用户头像
+	 * @param account
+	 * @param head
+	 * @return
+	 */
+	public boolean editHead(String account,String head) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("account", account);
+		params.put("head", head);
+		String hql= "update User set head = :head where account = :account"; 
+		return userDAO.executeHql(hql,params) > 0 ? true : false;
+	}
+	/**
 	 * 复制list
 	 * 
 	 * @param list
@@ -124,7 +138,6 @@ public class UserService implements BaseService<User> {
 		String hql = "from User where account like :q or nickname like :q";
 		return userDAO.find(hql, params);
 	}
-	
 	
 	
 	

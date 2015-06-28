@@ -1,10 +1,14 @@
 
 package org.ike.youme.controller;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.ike.youme.entity.User;
 import org.ike.youme.model.EUser;
@@ -18,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -54,7 +60,6 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/requestCode")
 	public Map<String, String> requestCode(String jsonString) {
-		System.out.println("请求/user/requestCode：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		String number = (String)object.get("number");
 		//生成4位验证码
@@ -90,11 +95,11 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/add")
 	public Map<String, Object> add(String jsonString) {
-		System.out.println("请求/user/add：" + jsonString);
 		EUser eUser = JSON.parseObject(jsonString, EUser.class);
 		User user = new User();
 		BeanUtils.copyProperties(eUser, user);
 		user.setNickname(eUser.getAccount());
+		user.setHead("/images/head/default.jpg");
 		user.setSex("男");
 		user.setSign("他很懒，什么也没留下~");
 		user.setCreateTime(Tool.getCurrentTime());
@@ -118,7 +123,6 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/login")
 	public Map<String, Object> login(String jsonString) {
-		System.out.println("请求/user/login：" + jsonString);
 		EUser eUser = JSON.parseObject(jsonString, EUser.class);
 		User user = userService.getUser(eUser.getAccount(), eUser.getPwd());
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -132,6 +136,79 @@ public class UserController {
 		return map;
 	}
 	/**
+	 * 修改头像
+	 * @param multipartFile
+	 * @param request
+	 * @return 
+	 */
+	@ResponseBody
+	@RequestMapping("/editHead")
+	public Map<String, String> editHead(String account,HttpServletRequest request) {
+		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+		MultipartFile multipartFile = multipartRequest.getFile("file");
+		String realPath = request.getSession().getServletContext().getRealPath("/images/head/");
+		File file = new File(realPath);
+		if (!file.exists()) {
+			file.mkdirs();
+		}
+		//获取文件的后缀
+		String suffix = multipartFile.getOriginalFilename().substring(
+				multipartFile.getOriginalFilename().lastIndexOf("."));
+        // 使用UUID生成文件名称
+        String fileName = UUID.randomUUID().toString() + suffix;
+        //完整路径
+        realPath += File.separator + fileName;
+        file = new File(realPath);
+        System.out.println(realPath);
+        Map<String, String> map = new HashMap<String, String>();
+        try {
+			multipartFile.transferTo(file);
+			//删除原来的头像
+			String head = userService.getUser(account).getHead();
+			if (!head.equals("/images/head/default.jpg")) {
+				Tool.deleteFile(System.getProperty("web.root") + head);
+			}
+			head = "/images/head/"+fileName;
+			if (userService.editHead(account, head)) {
+				map.put("status", "success");
+				map.put("head", head);
+			}else {
+				map.put("status", "fail");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			map.put("status", "fail");
+		}
+		return map;
+	}
+	/**
+	 * 修改用户信息
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/editInfo")
+	public Map<String, String> editInfo(String jsonString) {
+		EUser eUser = JSON.parseObject(jsonString, EUser.class);
+		Map<String, String> map = new HashMap<String, String>();
+		User user = userService.getUser(eUser.getAccount());
+		if (user == null) {
+			map.put("status", "fail");
+		}else {
+			user.setNickname(eUser.getNickname());
+			user.setSex(eUser.getSex());
+			user.setAge(eUser.getAge());
+			user.setSign(eUser.getSign());
+			user.setCity(eUser.getCity());
+			user.setName(eUser.getName());
+			userService.update(user);
+			map.put("status", "success");
+		}
+		return map;
+	}
+	/**
 	 * 根据userId查找用户
 	 * 
 	 * @param jsonString
@@ -141,7 +218,6 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/getUser")
 	public EUser getUser(String jsonString) {
-		System.out.println("请求/user/getUser：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		User user = userService.get(userId);
@@ -159,7 +235,6 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/getUsers")
 	public List<EUser> getUsers(String jsonString) {
-		System.out.println("请求/user/getUsers：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		List<Integer> ids = JSONArray.parseArray(object.getString("ids"),Integer.class);
 		List<User> list = userService.getUsers(ids);
@@ -174,8 +249,7 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/listAll")
-	public List<EUser> listAll(String jsonString) {
-		//System.out.println("请求/user/listAll：" + jsonString);
+	public List<EUser> listAll() {
 		List<User> list = userService.findAll();
 		return userService.copyList(list);
 	}
@@ -189,13 +263,11 @@ public class UserController {
 	@ResponseBody
 	@RequestMapping("/searchUser")
 	public List<EUser> searchUser(String jsonString) {
-		//System.out.println("请求/user/searchUser：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		String q = (String)object.get("q");
 		List<User> list = userService.searchUser(q);
 		return userService.copyList(list);
 	}
-	
 	
 
 }

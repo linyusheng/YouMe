@@ -9,12 +9,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.ike.youme.entity.Type;
 import org.ike.youme.entity.Activity;
 import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.Footprint;
 import org.ike.youme.entity.Photo;
-import org.ike.youme.entity.User;
 import org.ike.youme.model.EActivity;
 import org.ike.youme.model.EType;
 import org.ike.youme.model.EUser;
@@ -27,10 +28,11 @@ import org.ike.youme.util.Page;
 import org.ike.youme.util.Tool;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -70,13 +72,18 @@ public class ActivityController {
 	 */
 	@ResponseBody
 	@RequestMapping("/add")
-	public String add(String jsonString) {
-		System.out.println("请求/activity/add：" + jsonString);
-		EActivity e = JSON.parseObject(jsonString,EActivity.class);
-		Activity activity = copyEntity(e);
-		//保存活动对象
-		Integer activityId = (Integer)activityService.save(activity);
-		return "发布成功！";
+	public Map<String, String> add(String activity, HttpServletRequest request) {
+		EActivity e = JSON.parseObject(activity,EActivity.class);
+		Activity a = copyEntity(e);
+        a.setPoster(savePoster(request));
+        Map<String, String> map = new HashMap<String, String>();
+		Integer activityId = (Integer)activityService.save(a);
+		if (activityId == null) {
+			map.put("status", "fail");
+		}else {
+			map.put("status", "success");
+		}
+		return map;
 	}
 	/**
 	 * 将实体EActivity还原回实体Activity
@@ -88,52 +95,65 @@ public class ActivityController {
 	public Activity copyEntity(EActivity e) {
 		Activity activity = new Activity();
 		Type type = new Type();
-		User user = new User();
 		//忽略复制的属性
-		String[] ignores = {"poster"};
+		String[] ignores = {"activityId","poster","createTime","startTime","endTime","attendNum","browseNum"};
 		BeanUtils.copyProperties(e, activity,ignores);
 		//设置系统默认属性
-		user.setUserId(e.getUserId());
 		type.setTypeId(e.getTypeId());
-		activity.setUser(user);
+		activity.setUser(userService.getUser(e.getAccount()));
 		activity.setType(type);
 		activity.setCreateTime(Tool.getCurrentTime());
 		activity.setStartTime(Timestamp.valueOf(e.getStartTime()));
 		activity.setEndTime(Timestamp.valueOf(e.getEndTime()));
 		activity.setAttendNum(0);
 		activity.setBrowseNum(0);
-		//将海报字节数组输出到服务器指定目录下
-		String poster = e.getPoster();
-		//判断海报字节数组是否为空
-		if (poster != null) {
-			Map<String, Object> map = savePoster(poster);
-			activity.setPoster((String)map.get("savePath"));
-		}
 		return activity;
 	}
 	/**
-	 * 保存海报，将图片字节数组输出到服务器端存储
-	 * 返回值	1、图片宽高比	2、保存路径 （/images/poster/当天日期/文件名）
+	 * 保存海报
 	 * 
 	 * @param poster
 	 * 
 	 * @return
 	 */
-	public Map<String, Object> savePoster(String poster) {
-		String currentDate = Tool.getCurrentDate();
-		String webRoot = System.getProperty("web.root");
-		String saveDir = File.separatorChar + "images" + File.separatorChar + "poster" + File.separatorChar + currentDate + File.separatorChar;
-		File file = new File(webRoot + saveDir);
-		//如果文件夹不存在则创建
-		if (!file.exists() && !file.isDirectory()) {
-			file.mkdir();
+	public String savePoster(HttpServletRequest request) {
+		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+		MultipartFile multipartFile = multipartRequest.getFile("file");
+		String realPath = request.getSession().getServletContext().getRealPath("/images/poster/");
+		File file = new File(realPath);
+		if (!file.exists()) {
+			file.mkdirs();
 		}
-		String fileName = UUID.randomUUID().toString() + ".jpg";
-		float aspectRatio = Tool.stringToImage(poster, webRoot + saveDir + fileName);
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("aspectRatio", aspectRatio);
-		map.put("savePath", "/images/poster/" + currentDate + "/" + fileName);
-		return map;
+		//获取文件的后缀
+		String suffix = multipartFile.getOriginalFilename().substring(
+				multipartFile.getOriginalFilename().lastIndexOf("."));
+        // 使用UUID生成文件名称
+        String fileName = UUID.randomUUID().toString() + suffix;
+        //完整路径
+        realPath += File.separator + fileName;
+        file = new File(realPath);
+        try {
+			multipartFile.transferTo(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        return "/images/poster/"+fileName;
+	}
+	/**
+	 * 加载最新的活动
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/listNewest")
+	public List<EActivity> listNewest(String typeId,String activityId,String city) {
+		Integer _typeId = Integer.parseInt(typeId);
+		Integer _activityId = Integer.parseInt(activityId);
+		List<Activity> list = activityService.findNewest(_typeId, _activityId, city);
+		List<EActivity> eList = activityService.copyList(list);
+		return eList;
 	}
 	/**
 	 * 加载更多活动
@@ -145,32 +165,12 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/listMore")
 	public List<EActivity> listMore(String jsonString) {
-		System.out.println("请求/activities/listMore：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activitiesId = (Integer)object.get("eActivitiesId");
 		String city = (String)object.get("city");
 		List<EType> typeList = JSONArray.parseArray(object.getString("typeList"),EType.class);
 		Page page = new Page();
 		List<Activity> list = activityService.findMore(activitiesId,city,typeList,page);
-		List<EActivity> eList = activityService.copyList(list);
-		return eList;
-	}
-	/**
-	 * 加载最新的活动
-	 * 
-	 * @param jsonString
-	 * 
-	 * @return
-	 */
-	@ResponseBody
-	@RequestMapping("/listNewest")
-	public List<EActivity> listNewest(String jsonString) {
-		System.out.println("请求/activities/listNewest：" + jsonString);
-		JSONObject object = JSON.parseObject(jsonString);
-		Integer activitiesId = (Integer)object.get("eActivitiesId");
-		String city = (String)object.get("city");
-		List<EType> typeList = JSONArray.parseArray(object.getString("typeList"),EType.class);
-		List<Activity> list = activityService.findNewest(activitiesId,city,typeList);
 		List<EActivity> eList = activityService.copyList(list);
 		return eList;
 	}
@@ -184,7 +184,6 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/listMyActivity")
 	public List<EActivity> listMyActivity(String jsonString){
-		System.out.println("请求/activity/listMyActivity：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		Integer activityId = (Integer)object.get("activityId");
@@ -206,7 +205,6 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/findMyActivity")
 	public List<EActivity> findMyActivity(String jsonString){
-		System.out.println("请求/activity/findMyActivity：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		List<Activity> list = new ArrayList<Activity>();
@@ -226,7 +224,6 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/isExistActivity")
 	public Map<String, String> isExistActivity(String jsonString) {
-		System.out.println("请求/activity/isExistActivity：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("activityId");
 		Activity activity = activityService.get(activityId);
@@ -246,7 +243,6 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/activityInfo")
 	public Map<String, Object> activityInfo(String jsonString) {
-		System.out.println("请求/activity/activityInfo：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		Integer activityId = (Integer)object.get("activityId");
@@ -285,12 +281,10 @@ public class ActivityController {
 	@ResponseBody
 	@RequestMapping("/delete")
 	public Map<String, String> delete(String jsonString) {
-		System.out.println("请求/activity/delete：" + jsonString);
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("activityId");
 		//删除所有的参与记录和足迹
 		Activity activity = activityService.get(activityId);
-		Set<Attend> attends = activity.getAttends();
 		Set<Footprint> footprints = activity.getFootprints();
 		for (Footprint footprint : footprints) {
 			//删除足迹的照片
@@ -317,9 +311,53 @@ public class ActivityController {
 	 */
 	@ResponseBody
 	@RequestMapping("/listAll")
-	public List<EActivity> listAll(String jsonString) {
-		System.out.println("请求/activity/listAll：" + jsonString);
+	public List<EActivity> listAll() {
 		List<Activity> list = activityService.findAll();
+		return activityService.copyList(list);
+	}
+	/**
+	 * 获取公益活动（推荐）
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getPublic")
+	public List<EActivity> getPublic(String jsonString) {
+		JSONObject object = JSON.parseObject(jsonString);
+		String city = (String)object.get("city");
+		List<Activity> list = activityService.getPublic(city);
+		return activityService.copyList(list);
+	}
+	/**
+	 * 获取最新活动（推荐）
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getNewest")
+	public List<EActivity> getNewest(String jsonString) {
+		JSONObject object = JSON.parseObject(jsonString);
+		String city = (String)object.get("city");
+		List<Activity> list = activityService.getNewest(city);
+		return activityService.copyList(list);
+	}
+	/**
+	 * 获取最热活动（推荐）
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getHottest")
+	public List<EActivity> getHottest(String jsonString) {
+		JSONObject object = JSON.parseObject(jsonString);
+		String city = (String)object.get("city");
+		List<Activity> list = activityService.getHottest(city);
 		return activityService.copyList(list);
 	}
 

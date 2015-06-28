@@ -18,7 +18,6 @@ public class EActivity {
     private Integer femaleNum;		//活动女性人数
     private Integer attendNum;		//活动参与人数
     private Integer browseNum;		//活动浏览人数
-    private Integer userId;			//发布者Id
     private String account;			//发布者账号
     private String nickname;		//发布者昵称
     private String head;			//发布者头像
@@ -118,12 +117,6 @@ public class EActivity {
 	}
 	public void setBrowseNum(Integer browseNum) {
 		this.browseNum = browseNum;
-	}
-	public Integer getUserId() {
-		return userId;
-	}
-	public void setUserId(Integer userId) {
-		this.userId = userId;
 	}
 	public String getAccount() {
 		return account;
