@@ -13,6 +13,11 @@ public class Page {
 	private int totalPage; 		// 分页后的总页数
 
 	public Page() {
+		
+	}
+	public Page(int currentPage, int pageSize) {
+		this.currentPage = currentPage;
+		this.pageSize = pageSize;
 	}
 
 	public int getTotalPage() {

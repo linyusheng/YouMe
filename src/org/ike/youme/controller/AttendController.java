@@ -1,7 +1,9 @@
 package org.ike.youme.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.ike.youme.entity.Activity;
 import org.ike.youme.entity.Attend;
@@ -9,7 +11,7 @@ import org.ike.youme.entity.User;
 import org.ike.youme.model.EUser;
 import org.ike.youme.service.ActivityService;
 import org.ike.youme.service.AttendService;
-import org.springframework.beans.BeanUtils;
+import org.ike.youme.util.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,13 +49,13 @@ public class AttendController {
 	 */
 	@ResponseBody
 	@RequestMapping("/addOrdelete")
-	public String addOrdelete(String jsonString) {
+	public Map<String, String> addOrdelete(String jsonString) {
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		Integer activityId = (Integer)object.get("activityId");
-		String result = "";
+		Map<String, String> map = new HashMap<String, String>();
 		//查找是否有参与记录
-		Attend attend = attendService.isAttend(userId, activityId);
+		Attend attend = attendService.get(userId, activityId);
 		if (attend == null) {
 			User user = new User();
 			Activity activity = new Activity();
@@ -61,33 +63,28 @@ public class AttendController {
 			activity.setActivityId(activityId);
 			attend = new Attend(activity,user);
 			attendService.save(attend);
-			result = "exit";
+			map.put("status", "exit");
 		}else {
+			System.out.println(attend);
 			attendService.delete(attend.getAttendId());
-			result = "attend";
+			map.put("status", "attend");
 		}
-		return result;
+		return map;
 	}
 	/**
-	 * 根据活动Id列出所有参与者
+	 * 获取活动参与者，分页查询
 	 * 
 	 * @param jsonString
 	 * 
 	 * @return
 	 */
 	@ResponseBody
-	@RequestMapping("/listAttender")
-	public List<EUser> listAttender(String jsonString) {
+	@RequestMapping("/get")
+	public List<EUser> get(String jsonString) {
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer activityId = (Integer)object.get("activityId");
-		List<Attend> list = attendService.findByActivityId(activityId);
-		List<EUser> eList = new ArrayList<EUser>();
-		for (Attend attend : list) {
-			EUser eUser = new EUser();
-			BeanUtils.copyProperties(attend.getUser(), eUser);
-			eList.add(eUser);
-		}
-		return eList;
+		Integer userId = (Integer)object.get("userId");
+		return attendService.find(activityId,userId,new Page(1, 12));
 	}
 	/**
 	 * 判断某用户是否已参加某活动
@@ -102,7 +99,7 @@ public class AttendController {
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("eUserId");
 		Integer activityId = (Integer)object.get("activityId");
-		Attend attend = attendService.isAttend(userId, activityId);
+		Attend attend = attendService.get(userId, activityId);
 		if (attend == null) {
 			return "0";
 		}

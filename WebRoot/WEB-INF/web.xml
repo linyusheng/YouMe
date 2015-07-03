@@ -72,7 +72,6 @@
 		<servlet-name>mvc-dispacher</servlet-name>
 		<url-pattern>/</url-pattern>
 	</servlet-mapping>
-
 	<!-- 配置静态资源不经过spring mvc拦截 -->
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
@@ -104,6 +103,10 @@
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
+		<url-pattern>*.jpeg</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
 		<url-pattern>*.ico</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
@@ -130,6 +133,11 @@
 		<servlet-name>default</servlet-name>
 		<url-pattern>*.swf</url-pattern>
 	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.webp</url-pattern>
+	</servlet-mapping>
+
 
 	<!-- 配置session超时时间，单位分钟 -->
 	<session-config>

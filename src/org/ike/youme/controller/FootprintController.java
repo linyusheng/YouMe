@@ -1,9 +1,14 @@
 package org.ike.youme.controller;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.ike.youme.entity.Activity;
 import org.ike.youme.entity.Footprint;
@@ -18,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -43,55 +50,80 @@ public class FootprintController {
 	
 	/**
 	 * 添加足迹
-	 * 
-	 * @param jsonString
-	 * 
+	 * @param footprint
+	 * @param request
 	 * @return
 	 */
 	@ResponseBody
 	@RequestMapping("/add")
-	public String add(String jsonString) {
-		EFootprint eFootprint = JSON.parseObject(jsonString, EFootprint.class);
+	public Map<String, String> add(String footprint, HttpServletRequest request) {
+		Map<String, String> map = new HashMap<String, String>();
+		EFootprint e = JSON.parseObject(footprint, EFootprint.class);
+		Integer footprintId = (Integer)footprintService.save(copyObject(e));
+		if (footprintId == null) {
+			map.put("status", "fail");
+		}
+		Footprint f = footprintService.get(footprintId);
+		List<String> photos = savePhoto(request);
+		for (String p : photos) {
+			Photo photo = new Photo();
+			photo.setFootprint(f);
+			photo.setPhotoUrl(p);
+			photoService.save(photo);
+		}
+		map.put("status", "success");
+		return map;
+	}
+	/**
+	 * 复制对象属性
+	 * 
+	 * @param e
+	 * 
+	 * @return
+	 */
+	public Footprint copyObject(EFootprint e){
 		Footprint f = new Footprint();
 		User user = new User();
 		Activity activity = new Activity();
-		user.setUserId(eFootprint.getUserId());
-		activity.setActivityId(eFootprint.getActivityId());
+		user.setUserId(e.getUserId());
+		activity.setActivityId(e.getActivityId());
 		f.setUser(user);
 		f.setActivity(activity);
-		f.setMood(eFootprint.getMood());
+		f.setMood(e.getMood());
 		f.setCreateTime(Tool.getCurrentTime());
-		Integer footprintId = (Integer)footprintService.save(f);
-		f.setFootprintId(footprintId);
-		//保存足迹照片
-		Photo photo = new Photo();
-		photo.setFootprint(f);
-		List<String> photos = eFootprint.getPhotos();
-		for (String p : photos) {
-			photo.setPhotoUrl(savePhoto(p));
-			photoService.save(photo);
-		}
-		return "发表成功！";
+		return f;
 	}
 	/**
-	 * 保存照片，将照片字节数组输出到服务器端存储，返回值为保存路径 （/images/photo/当天日期/文件名）
+	 * 保存照片
 	 * 
 	 * @param photoStream
 	 * 
 	 * @return
 	 */
-	public String savePhoto(String photoStream) {
-		String currentDate = Tool.getCurrentDate();
-		String webRoot = System.getProperty("web.root");
-		String saveDir = File.separatorChar + "images" + File.separatorChar + "photo" + File.separatorChar + currentDate + File.separatorChar;
-		File file = new File(webRoot + saveDir);
-		//如果文件夹不存在则创建
-		if (!file.exists() && !file.isDirectory()) {
+	public List<String> savePhoto(HttpServletRequest request) {
+		MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+		List<MultipartFile> multipartFiles = multipartRequest.getFiles("files");
+		String realPath = request.getSession().getServletContext().getRealPath("/images/photo/");
+		File file = new File(realPath);
+		if (!file.exists()) {
 			file.mkdirs();
 		}
-		String fileName = UUID.randomUUID().toString() + ".jpg";
-		Tool.stringToImage(photoStream, webRoot + saveDir + fileName);
-		return "/images/photo/" + currentDate + "/" + fileName;
+		List<String> photos = new ArrayList<String>();
+		for (MultipartFile multipartFile : multipartFiles) {
+			//获取文件的后缀
+			String suffix = multipartFile.getOriginalFilename().substring(
+					multipartFile.getOriginalFilename().lastIndexOf("."));
+	        // 使用UUID生成文件名称
+	        String fileName = UUID.randomUUID().toString() + suffix;
+	        file = new File(realPath + File.separator + fileName);
+	        try {
+				multipartFile.transferTo(file);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+	        photos.add("/images/photo/"+fileName);
+		}
+        return photos;
 	}
 	/**
 	 * 查找本活动的足迹(分页查找)
@@ -101,13 +133,12 @@ public class FootprintController {
 	 * @return
 	 */
 	@ResponseBody
-	@RequestMapping("/listMore")
-	public List<EFootprint> listMore(String jsonString) {
+	@RequestMapping("/getMore")
+	public List<EFootprint> getMore(String jsonString) {
 		JSONObject object = JSON.parseObject(jsonString);
-		Integer activityId = (Integer)object.get("eActivityId");
-		Integer footprintId = (Integer)object.get("eFootprintId");
-		Page page = new Page();
-		List<Footprint> list = footprintService.findMore(activityId,footprintId,page);
+		Integer activityId = (Integer)object.get("activityId");
+		Integer footprintId = (Integer)object.get("footprintId");
+		List<Footprint> list = footprintService.findMore(activityId,footprintId,new Page());
 		return footprintService.copyList(list);
 	}
 	/**
@@ -118,11 +149,11 @@ public class FootprintController {
 	 * @return
 	 */
 	@ResponseBody
-	@RequestMapping("/listNewest")
-	public List<EFootprint> listNewest(String jsonString) {
+	@RequestMapping("/getNewest")
+	public List<EFootprint> getNewest(String jsonString) {
 		JSONObject object = JSON.parseObject(jsonString);
-		Integer activityId = (Integer)object.get("eActivityId");
-		Integer footprintId = (Integer)object.get("eFootprintId");
+		Integer activityId = (Integer)object.get("activityId");
+		Integer footprintId = (Integer)object.get("footprintId");
 		List<Footprint> list = footprintService.findNewest(activityId, footprintId);
 		return footprintService.copyList(list);
 	}

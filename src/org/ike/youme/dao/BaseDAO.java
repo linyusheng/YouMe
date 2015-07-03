@@ -64,6 +64,7 @@ public class BaseDAO<T> {
 	public void delete(T o) {
 		if (o != null) {
 			this.getCurrentSession().delete(o);
+			this.getCurrentSession().flush();
 		}
 	}
 

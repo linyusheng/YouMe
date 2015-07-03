@@ -66,7 +66,7 @@ public class FootprintService implements BaseService<Footprint> {
 		List<EFootprint> eList = new ArrayList<EFootprint>();
 		for (Footprint f : list) {
 			EFootprint e = new EFootprint();
-			String[] ignore = {"createTime"};
+			String[] ignore = {"createTime","photos"};
 			BeanUtils.copyProperties(f, e,ignore);
 			e.setUserId(f.getUser().getUserId());
 			e.setNickname(f.getUser().getNickname());
@@ -86,23 +86,22 @@ public class FootprintService implements BaseService<Footprint> {
 	}
 	/**
 	 * 加载更多足迹
-	 * 
 	 * @param activityId
-	 * 
+	 * @param footprintId
+	 * @param page
 	 * @return
 	 */
 	public List<Footprint> findMore(Integer activityId,Integer footprintId,Page page) {
-		String hql = "";
+		String hql;
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("activityId", activityId);
 		//判断是否为第一次浏览足迹
-		if (footprintId == 0) {
+		if (footprintId == null) {
 			hql = "from Footprint where activity.activityId = :activityId order by footprintId desc";
 		}else {
 			hql = "from Footprint where activity.activityId = :activityId and footprintId < :footprintId order by footprintId desc";
 			params.put("footprintId", footprintId);
 		}
-		//System.out.println("浏览足迹："+selectHql);
 		return footprintDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
 		
 	}
@@ -117,7 +116,6 @@ public class FootprintService implements BaseService<Footprint> {
 		params.put("activityId", activityId);
 		params.put("footprintId", footprintId);
 		String hql = "from Footprint where activity.activityId = :activityId and footprintId > :footprintId order by footprintId desc";
-		//System.out.println("刷新足迹："+selectHql);
 		return footprintDAO.find(hql, params);
 	}
 	

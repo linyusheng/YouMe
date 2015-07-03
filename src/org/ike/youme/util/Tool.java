@@ -11,7 +11,9 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -62,8 +64,73 @@ public class Tool {
 		//HH：24小时制时间显示  hh:12小时制时间显示
 		Format f = new SimpleDateFormat("yyyy-MM-dd");
 		Date date = new Date();
-		String time = f.format(date);
-		return time;
+		return f.format(date);
+	}
+	/**
+	 * 获取明天日期
+	 * @return
+	 */
+	public static String getTomorrowDate() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Date date = new Date();
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(date);
+		calendar.add(calendar.DATE, 1);
+		date = calendar.getTime();
+		return f.format(date);
+	}
+	/**
+	 * 获得本周一的日期
+	 * @return
+	 */
+	public static String getMondayOFWeek() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendar =Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+		return f.format(calendar.getTime());
+	}
+	/**
+	 * 获得本周六的日期
+	 * @return
+	 */
+	public static String getSaturdayOFWeek() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendar =Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY);
+		return f.format(calendar.getTime());
+	}
+	/**
+	 * 获得本周日的日期
+	 * @return
+	 */
+	public static String getSundayOFWeek() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendar =Calendar.getInstance();
+		//这种输出的是上个星期周日的日期，因为老外那边把周日当成第一天
+		calendar.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
+		//增加一个星期，才是我们中国人理解的本周日的日期
+		calendar.add(Calendar.WEEK_OF_YEAR, 1);
+		return f.format(calendar.getTime());
+	}
+	/**
+	 * 获得本月第一天的日期
+	 * @return
+	 */
+	public static String getFirstOFMonth() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendar =Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_MONTH, 1);
+		return f.format(calendar.getTime());
+	}
+	/**
+	 * 获得本月最后一天的日期
+	 * @return
+	 */
+	public static String getLastOFMonth() {
+		Format f = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendar =Calendar.getInstance();
+		calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
+		return f.format(calendar.getTime());
 	}
 	/** 
 	 * 删除单个文件 
@@ -139,6 +206,16 @@ public class Tool {
 			e.printStackTrace();
 		}
 		return "/images/head/" + currentDate + "/" + fileName;
+	}
+	
+	public static void main(String[] args) {
+//		System.out.println(getCurrentDate());
+//		System.out.println(getTomorrowDate());
+//		System.out.println(getMondayOFWeek());
+//		System.out.println(getSaturdayOFWeek());
+//		System.out.println(getSundayOFWeek());
+//		System.out.println(getFirstOFMonth());
+//		System.out.println(getLastOFMonth());
 	}
 
 }

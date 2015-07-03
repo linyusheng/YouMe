@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.ike.youme.entity.Activity;
+import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.User;
 import org.ike.youme.model.EUser;
 import org.ike.youme.service.ActivityService;

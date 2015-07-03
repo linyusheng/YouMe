@@ -100,27 +100,37 @@ public class ActivityService implements BaseService<Activity> {
 	 * @param page
 	 * @return
 	 */
-	public List<Activity> findMore(Integer activityId,String city,List<EType> typeList,Page page) {
+	public List<Activity> findMore(Integer activityId, String typeName, String city, String time) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("city", city);
-		String hql = "";
-		//如果为第一次浏览活动
-		if (activityId == 0) {
-			if (typeList.size() == 0) {
-				hql = "from Activity where city = :city order by activityId desc";
-			}else {
-				hql = "from Activity where and city = :city and type.typeId in(" + typeSql(typeList) + ") order by activityId desc";
-			}
-		}else {
-			if (typeList.size() == 0) {
-				hql = "from Activity where city = :city and activityId < :activityId order by activityId desc";
-			}else {
-				hql = "from Activity where  city = :city and activityId < :activityId and type.typeId in(" + typeSql(typeList) + ") order by activityId desc";
-			}
+		String hql = "from Activity where city = :city";
+		if (activityId != 0) {
 			params.put("activityId", activityId);
+			hql += " and activityId < :activityId";
 		}
-		//System.out.println("浏览活动："+selectHql);
-		return activityDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
+		if (!typeName.equals("全部类型")) {
+			params.put("typeName", typeName);
+			hql += " and type.typeName = :typeName";
+		}
+		if (!time.equals("全部时段")) {
+			if (time.equals("今天")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = CURDATE()";
+			}
+			if (time.equals("明天")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = '"+Tool.getTomorrowDate()+"'";
+			}
+			if (time.equals("本周")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getMondayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+			}
+			if (time.equals("本周末")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getSaturdayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+			}
+			if (time.equals("本月")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getFirstOFMonth()+"' AND '"+Tool.getLastOFMonth()+"'";
+			}
+		}
+		hql += " order by activityId desc";
+		return activityDAO.find(hql, params, 1, 10);
 	}
 	/**
 	 * 刷新活动
@@ -129,12 +139,33 @@ public class ActivityService implements BaseService<Activity> {
 	 * @param typeList
 	 * @return
 	 */
-	public List<Activity> findNewest(Integer typeId, Integer activityId,String city) {
+	public List<Activity> findNewest(Integer activityId, String typeName, String city, String time) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("city", city);
-		params.put("typeId", typeId);
 		params.put("activityId", activityId);
-		String hql = "from Activity where city = :city and activityId > :activityId and type.typeId = :typeId order by activityId asc";
+		String hql = "from Activity where city = :city and activityId > :activityId";
+		if (!typeName.equals("全部类型")) {
+			params.put("typeName", typeName);
+			hql += " and type.typeName = :typeName";
+		}
+		if (!time.equals("全部时段")) {
+			if (time.equals("今天")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = CURDATE()";
+			}
+			if (time.equals("明天")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = '"+Tool.getTomorrowDate()+"'";
+			}
+			if (time.equals("本周")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getMondayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+			}
+			if (time.equals("本周末")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getSaturdayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+			}
+			if (time.equals("本月")) {
+				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getFirstOFMonth()+"' AND '"+Tool.getLastOFMonth()+"'";
+			}
+		}
+		hql += " order by activityId asc";
 		return activityDAO.find(hql, params);
 	}
 	/**
@@ -183,33 +214,27 @@ public class ActivityService implements BaseService<Activity> {
 	 * 
 	 * @return
 	 */
-	public List<Activity> getPublic(String city) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("city", city);
-		String hql = "from Activity where city=:city and type.typeName = '公益' order by activityId asc";
-		return activityDAO.find(hql, params,1,10);
+	public List<Activity> getPublic() {
+		String hql = "from Activity where type.typeName = '公益' order by activityId asc";
+		return activityDAO.find(hql,1,10);
 	}
 	/**
 	 * 获取10条最新活动
 	 * 
 	 * @return
 	 */
-	public List<Activity> getNewest(String city) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("city", city);
-		String hql = "from Activity where city=:city order by activityId asc";
-		return activityDAO.find(hql, params,1,10);
+	public List<Activity> getNewest() {
+		String hql = "from Activity order by activityId asc";
+		return activityDAO.find(hql,1,10);
 	}
 	/**
 	 * 获取10条最热活动
 	 * 
 	 * @return
 	 */
-	public List<Activity> getHottest(String city) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("city", city);
-		String hql = "from Activity where city=:city order by browseNum desc";
-		return activityDAO.find(hql, params,1,10);
+	public List<Activity> getHottest() {
+		String hql = "from Activity order by browseNum desc";
+		return activityDAO.find(hql, 1, 10);
 	}
 	
 	

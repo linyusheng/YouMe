@@ -4,8 +4,11 @@ public class EComment {
 	
 	private Integer commentId;
     private Integer userId;
-    private Integer activitiesId;
-    private String commentContent;
+    private Integer activityId;
+    private String content;
+    private String createTime;
+    private String head;
+    private String nickname;
     
 	public Integer getCommentId() {
 		return commentId;
@@ -19,18 +22,37 @@ public class EComment {
 	public void setUserId(Integer userId) {
 		this.userId = userId;
 	}
-	public Integer getActivitiesId() {
-		return activitiesId;
+	public Integer getActivityId() {
+		return activityId;
 	}
-	public void setActivitiesId(Integer activitiesId) {
-		this.activitiesId = activitiesId;
+	public void setActivityId(Integer activityId) {
+		this.activityId = activityId;
 	}
-	public String getCommentContent() {
-		return commentContent;
+	public String getCreateTime() {
+		return createTime;
 	}
-	public void setCommentContent(String commentContent) {
-		this.commentContent = commentContent;
+	public void setCreateTime(String createTime) {
+		this.createTime = createTime;
 	}
+	public String getContent() {
+		return content;
+	}
+	public void setContent(String content) {
+		this.content = content;
+	}
+	public String getHead() {
+		return head;
+	}
+	public void setHead(String head) {
+		this.head = head;
+	}
+	public String getNickname() {
+		return nickname;
+	}
+	public void setNickname(String nickname) {
+		this.nickname = nickname;
+	}
+	
 
     
 }

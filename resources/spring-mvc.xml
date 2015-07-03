@@ -10,7 +10,7 @@
 						http://www.springframework.org/schema/context 
 						http://www.springframework.org/schema/context/spring-context.xsd
 						http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
-						
+	
 	<!-- 指定注入Bean时Spring要查找的包 (自动注入) -->
 	<context:component-scan base-package="org.ike.youme.controller,org.ike.youme.service,org.ike.youme.dao" />
 	
@@ -41,11 +41,13 @@
 	<!-- 支持上传文件 -->  
     <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/> 
 	
+	
 	<!-- 日志拦截器 -->
 	<mvc:interceptors>
 		<mvc:interceptor>
 			<mvc:mapping path="/activity/*"/>
 			<mvc:mapping path="/attend/*"/>
+			<mvc:mapping path="/comment/*"/>
 			<mvc:mapping path="/footprint/*"/>
 			<mvc:mapping path="/type/*"/>
 			<mvc:mapping path="/user/*"/>
