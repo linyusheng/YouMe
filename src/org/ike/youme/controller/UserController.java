@@ -10,12 +10,11 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.ike.youme.entity.Activity;
-import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.User;
 import org.ike.youme.model.EUser;
 import org.ike.youme.service.ActivityService;
 import org.ike.youme.service.AttendService;
+import org.ike.youme.service.FootprintService;
 import org.ike.youme.service.UserService;
 import org.ike.youme.util.SMSUtil;
 import org.ike.youme.util.Tool;
@@ -47,12 +46,12 @@ public class UserController {
 	
 	@Autowired
 	private UserService userService;
-	
 	@Autowired
 	private ActivityService activityService;
-	
 	@Autowired
 	private AttendService attendService;
+	@Autowired
+	private FootprintService footprintService;
 	
 	/**
 	 * 请求注册验证码
@@ -211,7 +210,7 @@ public class UserController {
 		return map;
 	}
 	/**
-	 * 根据userId查找用户
+	 * 根据userId查找用户信息、发表的足迹、发布的活动、参加的活动
 	 * 
 	 * @param jsonString
 	 * 
@@ -219,13 +218,22 @@ public class UserController {
 	 */
 	@ResponseBody
 	@RequestMapping("/getUser")
-	public EUser getUser(String jsonString) {
+	public Map<String, Object> getUser(String jsonString) {
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
+		Map<String, Object> map  = new HashMap<String, Object>();
+		//1.用户信息
 		User user = userService.get(userId);
 		EUser eUser = new EUser();
 		BeanUtils.copyProperties(user, eUser);
-		return eUser;
+		map.put("user", eUser);
+		//2.发表的足迹
+		map.put("footprints", userService.getRecentFootprint(userId));
+		//3.发布的活动
+		map.put("activities", userService.getRecentActivity(userId));
+		//4.参加的活动
+		map.put("attends", userService.getRecentAttend(userId));
+		return map;
 	}
 	/**
 	 * 根据userId数组查找多个用户信息

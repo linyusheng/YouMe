@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.Session;
 import org.ike.youme.entity.User;
+import org.ike.youme.dao.BaseDAO;
 import org.ike.youme.dao.UserDAO;
 import org.ike.youme.model.EUser;
 import org.springframework.beans.BeanUtils;
@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserService implements BaseService<User> {
 	
+	@Autowired
+	private BaseDAO<String> baseDAO;
 	@Autowired
 	private UserDAO userDAO;
 	
@@ -138,10 +140,42 @@ public class UserService implements BaseService<User> {
 		String hql = "from User where account like :q or nickname like :q";
 		return userDAO.find(hql, params);
 	}
-	
-	
-	
-	
+	/**
+	 * 获取最近发表的足迹
+	 * @return
+	 */
+	public List<String> getRecentFootprint(Integer userId) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		StringBuffer hql = new StringBuffer();
+		hql.append("select p.photoUrl FROM Footprint f, Photo p ");
+		hql.append("where f.footprintId=p.footprint.footprintId and f.user.userId=:userId order by photoId desc");
+		return baseDAO.find(hql.toString(), params,1,4);
+	}
+	/**
+	 * 获取最近发布的活动
+	 * @return
+	 */
+	public List<String> getRecentActivity(Integer userId) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		StringBuffer hql = new StringBuffer();
+		hql.append("select poster from Activity ");
+		hql.append("where user.userId=:userId order by activityId desc");
+		return baseDAO.find(hql.toString(), params,1,4);
+	}
+	/**
+	 * 获取最近参加的活动
+	 * @return
+	 */
+	public List<String> getRecentAttend(Integer userId) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		StringBuffer hql = new StringBuffer();
+		hql.append("select ay.poster from Attend ad,Activity ay ");
+		hql.append("where ad.activity.activityId=ay.activityId and ad.user.userId=:userId order by attendId desc");
+		return baseDAO.find(hql.toString(), params,1,4);	
+	}
 	
 	
 	

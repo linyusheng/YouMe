@@ -48,9 +48,11 @@
 			<mvc:mapping path="/activity/*"/>
 			<mvc:mapping path="/attend/*"/>
 			<mvc:mapping path="/comment/*"/>
+			<mvc:mapping path="/collect/*"/>
 			<mvc:mapping path="/footprint/*"/>
 			<mvc:mapping path="/type/*"/>
 			<mvc:mapping path="/user/*"/>
+			<mvc:mapping path="/test/*"/>
 			<bean class="org.ike.youme.intercetors.LogIntercetor"></bean>
 		</mvc:interceptor>
 	</mvc:interceptors>

@@ -17,7 +17,7 @@
             <column name="userId" />
         </many-to-one>
         <property name="title" type="java.lang.String">
-            <column name="title" length="25" />
+            <column name="title" length="100" />
         </property>
         <property name="city" type="java.lang.String">
             <column name="city" length="10" />

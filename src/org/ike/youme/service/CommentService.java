@@ -33,26 +33,22 @@ public class CommentService implements BaseService<Comment>{
 
 	@Override
 	public Comment get(Integer id) {
-		// TODO Auto-generated method stub
-		return null;
+		return commentDAO.get(Comment.class, id);
 	}
 
 	@Override
 	public Serializable save(Comment o) {
-		// TODO Auto-generated method stub
-		return null;
+		return commentDAO.save(o);
 	}
 
 	@Override
 	public void update(Comment o) {
-		// TODO Auto-generated method stub
-		
+		commentDAO.update(o);
 	}
 
 	@Override
 	public void delete(Integer id) {
-		// TODO Auto-generated method stub
-		
+		commentDAO.delete(get(id));
 	}
 
 	@Override
@@ -93,6 +89,22 @@ public class CommentService implements BaseService<Comment>{
 		return eList;
 	}
 	/**
+	 * 根据活动Id查找评论，刷新评论
+	 * 
+	 * @param activityId
+	 * @param commentId
+	 * 
+	 * @return
+	 */
+	public List<EComment> getNewest(Integer activityId,Integer commentId) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("activityId", activityId);
+		params.put("commentId", commentId);
+		String hql = "from Comment where activity.activityId = :activityId and commentId > :commentId order by commentId desc";
+		List<Comment> list = commentDAO.find(hql, params);
+		return copyList(list);
+	}
+	/**
 	 * 根据活动Id查找评论，可根据commentId是否为空分页查找
 	 * 
 	 * @param activityId
@@ -100,7 +112,7 @@ public class CommentService implements BaseService<Comment>{
 	 * 
 	 * @return
 	 */
-	public List<EComment> find(Integer activityId,Integer commentId) {
+	public List<EComment> getMore(Integer activityId,Integer commentId) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("activityId", activityId);
 		String hql;

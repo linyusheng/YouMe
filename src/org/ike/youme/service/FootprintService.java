@@ -118,6 +118,25 @@ public class FootprintService implements BaseService<Footprint> {
 		String hql = "from Footprint where activity.activityId = :activityId and footprintId > :footprintId order by footprintId desc";
 		return footprintDAO.find(hql, params);
 	}
+	/**
+	 * 查找我的足迹
+	 * @param userId
+	 * @param footprintId
+	 * @param page
+	 * @return
+	 */
+	public List<Footprint> getFootprint(Integer userId,Integer footprintId,Page page) {
+		String hql;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		if (footprintId == null) {
+			hql = "from Footprint where user.userId = :userId order by footprintId desc";
+		}else {
+			hql = "from Footprint where user.userId = :userId and footprintId < :footprintId order by footprintId desc";
+			params.put("footprintId", footprintId);
+		}
+		return footprintDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
+	}
 	
 	
 	

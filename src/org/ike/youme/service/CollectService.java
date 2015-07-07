@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.ike.youme.dao.CollectDAO;
 import org.ike.youme.entity.Collect;
+import org.ike.youme.util.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,32 +29,27 @@ public class CollectService implements BaseService<Collect> {
 
 	@Override
 	public Collect get(Integer id) {
-		// TODO Auto-generated method stub
-		return null;
+		return collectDAO.get(Collect.class, id);
 	}
 
 	@Override
 	public Serializable save(Collect o) {
-		// TODO Auto-generated method stub
-		return null;
+		return collectDAO.save(o);
 	}
 
 	@Override
 	public void update(Collect o) {
-		// TODO Auto-generated method stub
-		
+		collectDAO.update(o);
 	}
 
 	@Override
 	public void delete(Integer id) {
-		// TODO Auto-generated method stub
-		
+		collectDAO.delete(get(id));
 	}
 
 	@Override
 	public List<Collect> findAll() {
-		// TODO Auto-generated method stub
-		return null;
+		return collectDAO.find("from Collect");
 	}
 	
 	/**
@@ -71,6 +67,25 @@ public class CollectService implements BaseService<Collect> {
 		params.put("activityId", activityId);
 		String hql = "from Collect where user.userId = :userId and activity.activityId = :activityId";
 		return collectDAO.get(hql, params);
+	}
+	/**
+	 * 查看我的收藏活动
+	 * @param userId
+	 * @param activityId
+	 * @param page
+	 * @return
+	 */
+	public List<Collect> getCollect(Integer userId,Integer activityId,Page page) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		String hql;
+		if (activityId == null) {
+			hql = "from Collect where user.userId = :userId order by activity.activityId desc";
+		}else {
+			hql = "from Collect where user.userId = :userId and activity.activityId < :activityId order by activity.activityId desc";
+			params.put("activityId", activityId);
+		}
+		return collectDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
 	}
 
 }

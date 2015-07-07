@@ -10,6 +10,7 @@ import java.util.Set;
 import org.ike.youme.dao.ActivityDAO;
 import org.ike.youme.entity.Activity;
 import org.ike.youme.entity.Attend;
+import org.ike.youme.entity.Footprint;
 import org.ike.youme.model.EActivity;
 import org.ike.youme.model.EType;
 import org.ike.youme.util.Page;
@@ -73,6 +74,7 @@ public class ActivityService implements BaseService<Activity> {
 		e.setMaleNum(sex[0]);
 		e.setFemaleNum(sex[1]);
 		//初始化活动创建者信息
+		e.setUserId(activity.getUser().getUserId());
 		e.setAccount(activity.getUser().getAccount());
 		e.setNickname(activity.getUser().getNickname());
 		e.setHead(activity.getUser().getHead());
@@ -113,21 +115,7 @@ public class ActivityService implements BaseService<Activity> {
 			hql += " and type.typeName = :typeName";
 		}
 		if (!time.equals("全部时段")) {
-			if (time.equals("今天")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = CURDATE()";
-			}
-			if (time.equals("明天")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = '"+Tool.getTomorrowDate()+"'";
-			}
-			if (time.equals("本周")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getMondayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
-			}
-			if (time.equals("本周末")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getSaturdayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
-			}
-			if (time.equals("本月")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getFirstOFMonth()+"' AND '"+Tool.getLastOFMonth()+"'";
-			}
+			hql += typeSql(time);
 		}
 		hql += " order by activityId desc";
 		return activityDAO.find(hql, params, 1, 10);
@@ -149,40 +137,62 @@ public class ActivityService implements BaseService<Activity> {
 			hql += " and type.typeName = :typeName";
 		}
 		if (!time.equals("全部时段")) {
-			if (time.equals("今天")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = CURDATE()";
-			}
-			if (time.equals("明天")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') = '"+Tool.getTomorrowDate()+"'";
-			}
-			if (time.equals("本周")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getMondayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
-			}
-			if (time.equals("本周末")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getSaturdayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
-			}
-			if (time.equals("本月")) {
-				hql += " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getFirstOFMonth()+"' AND '"+Tool.getLastOFMonth()+"'";
-			}
+			hql += typeSql(time);
 		}
 		hql += " order by activityId asc";
 		return activityDAO.find(hql, params);
 	}
 	/**
-	 * 拼装活动类型条件sql
+	 * 搜索活动
+	 * @param q
+	 * @param activityId
+	 * @param city
+	 * @param typeList
+	 * @param page
+	 * @return
+	 */
+	public List<Activity> find(String q,Integer activityId, String typeName, String city, String time) {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("city", city);
+		params.put("q", "%%"+q.trim()+"%%");
+		String hql = "from Activity where city = :city and title like :q";
+		if (activityId != 0) {
+			params.put("activityId", activityId);
+			hql += " and activityId < :activityId";
+		}
+		if (!typeName.equals("全部类型")) {
+			params.put("typeName", typeName);
+			hql += " and type.typeName = :typeName";
+		}
+		if (!time.equals("全部时段")) {
+			hql += typeSql(time);
+		}
+		hql += " order by activityId desc";
+		return activityDAO.find(hql, params, 1, 10);
+	}
+	/**
+	 * 拼装时间类型条件sql
 	 * @param typeList
 	 * @return
 	 */
-	public String typeSql(List<EType> typeList) {
-		StringBuilder number = new StringBuilder();
-		for (int i = 0; i < typeList.size(); i++) {
-			if (0 == i) {
-				number.append(typeList.get(i).getTypeId());
-				continue;
-			}
-			number.append("," + typeList.get(i).getTypeId());
+	public String typeSql(String time) {
+		String hql = "";
+		if (time.equals("今天")) {
+			hql = " and DATE_FORMAT(startTime,'%Y-%m-%d') = CURDATE()";
 		}
-		return number.toString();
+		if (time.equals("明天")) {
+			hql = " and DATE_FORMAT(startTime,'%Y-%m-%d') = '"+Tool.getTomorrowDate()+"'";
+		}
+		if (time.equals("本周")) {
+			hql = " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getMondayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+		}
+		if (time.equals("本周末")) {
+			hql = " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getSaturdayOFWeek()+"' AND '"+Tool.getSundayOFWeek()+"'";
+		}
+		if (time.equals("本月")) {
+			hql = " and DATE_FORMAT(startTime,'%Y-%m-%d') BETWEEN '"+Tool.getFirstOFMonth()+"' AND '"+Tool.getLastOFMonth()+"'";
+		}
+		return hql;
 	}
 	/**
 	 * 获得活动总人数
@@ -236,7 +246,25 @@ public class ActivityService implements BaseService<Activity> {
 		String hql = "from Activity order by browseNum desc";
 		return activityDAO.find(hql, 1, 10);
 	}
+	/**
+	 * 查找用户发布的活动
+	 * @param userId
+	 * @param footprintId
+	 * @param page
+	 * @return
+	 */
+	public List<Activity> getPublish(Integer userId,Integer activityId,Page page) {
+		String hql;
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("userId", userId);
+		if (activityId == null) {
+			hql = "from Activity where user.userId = :userId order by activityId desc";
+		}else {
+			hql = "from Activity where user.userId = :userId and activityId < :activityId order by activityId desc";
+			params.put("activityId", activityId);
+		}
+		return activityDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
+	}
 	
-	
-
 }
+

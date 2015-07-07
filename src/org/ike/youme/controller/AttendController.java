@@ -8,6 +8,7 @@ import java.util.Map;
 import org.ike.youme.entity.Activity;
 import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.User;
+import org.ike.youme.model.EActivity;
 import org.ike.youme.model.EUser;
 import org.ike.youme.service.ActivityService;
 import org.ike.youme.service.AttendService;
@@ -38,7 +39,7 @@ public class AttendController {
 	private AttendService attendService;
 	
 	@Autowired
-	private ActivityService activitiesService;
+	private ActivityService activityService;
 	
 	/**
 	 * 用户参与或退出活动
@@ -65,7 +66,6 @@ public class AttendController {
 			attendService.save(attend);
 			map.put("status", "exit");
 		}else {
-			System.out.println(attend);
 			attendService.delete(attend.getAttendId());
 			map.put("status", "attend");
 		}
@@ -105,7 +105,26 @@ public class AttendController {
 		}
 		return "1";
 	}
-	
+	/**
+	 * 查找用户自己参加的活动
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getAttend")
+	public List<EActivity> getAttend(String jsonString){
+		JSONObject object = JSON.parseObject(jsonString);
+		Integer userId = (Integer)object.get("userId");
+		Integer activityId = (Integer)object.get("activityId");
+		List<Activity> list = new ArrayList<Activity>();
+		List<Attend> attends = attendService.getAttend(userId, activityId, new Page());
+		for (Attend attend : attends) {
+			list.add(attend.getActivity());
+		}
+		return activityService.copyList(list);
+	}
 	
 	
 	

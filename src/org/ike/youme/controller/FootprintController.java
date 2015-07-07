@@ -11,9 +11,11 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 
 import org.ike.youme.entity.Activity;
+import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.Footprint;
 import org.ike.youme.entity.Photo;
 import org.ike.youme.entity.User;
+import org.ike.youme.model.EActivity;
 import org.ike.youme.model.EFootprint;
 import org.ike.youme.service.FootprintService;
 import org.ike.youme.service.PhotoService;
@@ -178,6 +180,23 @@ public class FootprintController {
 		footprintService.delete(footprintId);
 		return "删除成功！";
 	}
+	/**
+	 * 查找用户自己发表的足迹
+	 * 
+	 * @param jsonString
+	 * 
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/getFootprint")
+	public List<EFootprint> getFootprint(String jsonString){
+		JSONObject object = JSON.parseObject(jsonString);
+		Integer userId = (Integer)object.get("userId");
+		Integer footprintId = (Integer)object.get("footprintId");
+		List<Footprint> list = footprintService.getFootprint(userId, footprintId, new Page());
+		return footprintService.copyList(list);
+	}
+	
 
 
 }

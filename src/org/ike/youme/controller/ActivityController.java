@@ -11,18 +11,13 @@ import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.ike.youme.dao.CommentDAO;
 import org.ike.youme.entity.Browse;
-import org.ike.youme.entity.Comment;
 import org.ike.youme.entity.Type;
 import org.ike.youme.entity.Activity;
-import org.ike.youme.entity.Attend;
 import org.ike.youme.entity.Footprint;
 import org.ike.youme.entity.Photo;
 import org.ike.youme.entity.User;
 import org.ike.youme.model.EActivity;
-import org.ike.youme.model.EType;
-import org.ike.youme.model.EUser;
 import org.ike.youme.service.ActivityService;
 import org.ike.youme.service.AttendService;
 import org.ike.youme.service.BrowseService;
@@ -152,71 +147,19 @@ public class ActivityController {
         return "/images/poster/"+fileName;
 	}
 	/**
-	 * 加载最新的活动
+	 * 查找用户发布的活动
 	 * 
 	 * @param jsonString
 	 * 
 	 * @return
 	 */
 	@ResponseBody
-	@RequestMapping("/listNewest")
-	public List<EActivity> listNewest(String typeName,String activityId,String city,String time) {
-		System.out.println(typeName+activityId+city+time);
-		List<Activity> list = activityService.findNewest(Integer.parseInt(activityId), typeName, city, time);
-		return activityService.copyList(list);
-	}
-	/**
-	 * 加载更多活动
-	 * 
-	 * @param jsonString
-	 * 
-	 * @return
-	 */
-	@ResponseBody
-	@RequestMapping("/listMore")
-	public List<EActivity> listMore(String typeName,String activityId,String city,String time) {
-		System.out.println(typeName+activityId+city+time);
-		List<Activity> list = activityService.findMore(Integer.parseInt(activityId), typeName, city, time);
-		return activityService.copyList(list);
-	}
-	/**
-	 * 根据用户Id查找自己参与的活动（分页回传）
-	 * 
-	 * @param jsonString
-	 * 
-	 * @return
-	 */
-	@ResponseBody
-	@RequestMapping("/listMyActivity")
-	public List<EActivity> listMyActivity(String jsonString){
+	@RequestMapping("/getPublish")
+	public List<EActivity> getPublish(String jsonString){
 		JSONObject object = JSON.parseObject(jsonString);
 		Integer userId = (Integer)object.get("userId");
 		Integer activityId = (Integer)object.get("activityId");
-		List<Activity> list = new ArrayList<Activity>();
-		Page page = new Page();
-		List<Attend> attends = attendService.findByUserId(userId,activityId,page);
-		for (Attend attend : attends) {
-			list.add(attend.getActivity());
-		}
-		return activityService.copyList(list);
-	}
-	/**
-	 * 根据userId或者openId查找自己参与的活动(一次性回传)
-	 * 
-	 * @param jsonString
-	 * 
-	 * @return
-	 */
-	@ResponseBody
-	@RequestMapping("/findMyActivity")
-	public List<EActivity> findMyActivity(String jsonString){
-		JSONObject object = JSON.parseObject(jsonString);
-		Integer userId = (Integer)object.get("userId");
-		List<Activity> list = new ArrayList<Activity>();
-		List<Attend> attends = attendService.findByUserId(userId);
-		for (Attend attend : attends) {
-			list.add(attend.getActivity());
-		}
+		List<Activity> list = activityService.getPublish(userId, activityId, new Page());
 		return activityService.copyList(list);
 	}
 	/**
@@ -265,7 +208,7 @@ public class ActivityController {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("activity", activityService.copyObject(activity));
 		map.put("users", attendService.find(activityId,null,new Page(1, 6)));
-		map.put("comments", commentService.find(activityId,null));
+		map.put("comments", commentService.getMore(activityId,null));
 		map.put("isAttend", attendService.get(userId, activityId)==null?false:true);
 		map.put("isCollect", collectService.get(userId, activityId)==null?false:true);
 		return map;
@@ -351,6 +294,39 @@ public class ActivityController {
 	@RequestMapping("/getHottest")
 	public List<EActivity> getHottest() {
 		List<Activity> list = activityService.getHottest();
+		return activityService.copyList(list);
+	}
+	/**
+	 * 加载最新的活动
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/listNewest")
+	public List<EActivity> listNewest(String typeName,String activityId,String city,String time) {
+		System.out.println(typeName+activityId+city+time);
+		List<Activity> list = activityService.findNewest(Integer.parseInt(activityId), typeName, city, time);
+		return activityService.copyList(list);
+	}
+	/**
+	 * 加载更多活动
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/listMore")
+	public List<EActivity> listMore(String typeName,String activityId,String city,String time) {
+		System.out.println(typeName+activityId+city+time);
+		List<Activity> list = activityService.findMore(Integer.parseInt(activityId), typeName, city, time);
+		return activityService.copyList(list);
+	}
+	/**
+	 * 搜索活动
+	 * @return
+	 */
+	@ResponseBody
+	@RequestMapping("/find")
+	public List<EActivity> find(String q,String typeName,String activityId,String city,String time) {
+		System.out.println(q+typeName+activityId+city+time);
+		List<Activity> list = activityService.find(q,Integer.parseInt(activityId), typeName, city, time);
 		return activityService.copyList(list);
 	}
 

@@ -68,37 +68,22 @@ public class AttendService implements BaseService<Attend> {
 		return attendDAO.get(hql, params);
 	}
 	/**
-	 * 根据userId查找自己参与的活动(一次性查询)
+	 * 根据用户Id查找参与记录
 	 * 
 	 * @param userId
 	 * 
 	 * @return
 	 */
-	public List<Attend> findByUserId(Integer userId) {
+	public List<Attend> getAttend(Integer userId,Integer activityId,Page page) {
 		Map<String, Object> params = new HashMap<String, Object>();
 		params.put("userId", userId);
-		String hql = "from Attend where user.userId = :userId order by activity.activityId desc";
-		return attendDAO.find(hql, params);
-	}
-	/**
-	 * 根据用户Id查找参与记录(根据活动Id降序排序)
-	 * 
-	 * @param userId
-	 * 
-	 * @return
-	 */
-	public List<Attend> findByUserId(Integer userId,Integer activityId,Page page) {
-		Map<String, Object> params = new HashMap<String, Object>();
-		params.put("userId", userId);
-		String hql = "";
-		//判断是否为第一次浏览活动
-		if (activityId == 0) {
+		String hql;
+		if (activityId == null) {
 			hql = "from Attend where user.userId = :userId order by activity.activityId desc";
 		}else {
 			hql = "from Attend where user.userId = :userId and activity.activityId < :activityId order by activity.activityId desc";
 			params.put("activityId", activityId);
 		}
-		//System.out.println("参与："+selectHql);
 		return attendDAO.find(hql, params, page.getCurrentPage(), page.getPageSize());
 	}
 	/**
